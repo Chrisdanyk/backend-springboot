@@ -32,6 +32,9 @@
 		<liquibase.version>4.25.0</liquibase.version>
 		<liquibase-hibernate6.version>4.25.0</liquibase-hibernate6.version>
 		<spring-boot.version>3.5.0</spring-boot.version>
+		<db.url>${DB_URL}</db.url>
+		<db.username>${DB_USERNAME}</db.username>
+		<db.password>${DB_PASSWORD}</db.password>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -166,14 +169,6 @@
 	</build>
 
 	<profiles>
-		<profile>
-			<id>local</id>
-			<properties>
-				<db.url>jdbc:postgresql://localhost:5432/todo-spring</db.url>
-				<db.username>chrisdany</db.username>
-				<db.password>dell</db.password>
-			</properties>
-		</profile>
 		<profile>
 			<id>diff</id>
 			<build>
