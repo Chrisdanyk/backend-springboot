@@ -29,6 +29,9 @@
 	</scm>
 	<properties>
 		<java.version>17</java.version>
+		<liquibase.version>4.25.0</liquibase.version>
+		<liquibase-hibernate6.version>4.25.0</liquibase-hibernate6.version>
+		<spring-boot.version>3.5.0</spring-boot.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -96,7 +99,45 @@
 	</dependencies>
 
 	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
 		<plugins>
+			<plugin>
+				<groupId>org.liquibase</groupId>
+				<artifactId>liquibase-maven-plugin</artifactId>
+				<version>${liquibase.version}</version>
+				<configuration>
+					<changeLogFile>src/main/resources/db/changelog/db.changelog-master.xml</changeLogFile>
+					<diffChangeLogFile>
+						src/main/resources/db/changelog/changes/${maven.build.timestamp}_changelog.xml</diffChangeLogFile>
+					<outputFile>
+						src/main/resources/db/changelog/changes/${maven.build.timestamp}_changelog.xml</outputFile>
+					<driver>org.postgresql.Driver</driver>
+					<url>jdbc:postgresql://localhost:5432/todo-spring</url>
+					<username>chrisdany</username>
+					<password>dell</password>
+					<referenceUrl>
+						hibernate:spring:cg.dany.todos.model?dialect=org.hibernate.dialect.PostgreSQLDialect</referenceUrl>
+					<verbose>true</verbose>
+					<logging>debug</logging>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>org.liquibase.ext</groupId>
+						<artifactId>liquibase-hibernate6</artifactId>
+						<version>${liquibase-hibernate6.version}</version>
+					</dependency>
+					<dependency>
+						<groupId>org.springframework.boot</groupId>
+						<artifactId>spring-boot-starter-data-jpa</artifactId>
+						<version>${spring-boot.version}</version>
+					</dependency>
+				</dependencies>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -126,6 +167,14 @@
 
 	<profiles>
 		<profile>
+			<id>local</id>
+			<properties>
+				<db.url>jdbc:postgresql://localhost:5432/todo-spring</db.url>
+				<db.username>chrisdany</db.username>
+				<db.password>dell</db.password>
+			</properties>
+		</profile>
+		<profile>
 			<id>diff</id>
 			<build>
 				<plugins>
@@ -134,11 +183,12 @@
 						<artifactId>liquibase-maven-plugin</artifactId>
 						<version>4.25.0</version>
 						<configuration>
-							<propertyFile>src/main/resources/.env</propertyFile>
+							<propertyFile>src/main/resources/liquibase.properties</propertyFile>
+							<changeLogFile>src/main/resources/db/changelog/db.changelog-master.xml</changeLogFile>
 							<diffChangeLogFile>
 								src/main/resources/db/changelog/changes/auto-generated-${maven.build.timestamp}.xml</diffChangeLogFile>
 							<referenceUrl>
-								hibernate:spring:cg.dany.todo.todos.model?dialect=org.hibernate.dialect.PostgreSQLDialect</referenceUrl>
+								hibernate:spring:cg.dany.todos.model?dialect=org.hibernate.dialect.PostgreSQLDialect</referenceUrl>
 							<outputFile>
 								src/main/resources/db/changelog/changes/auto-generated-${maven.build.timestamp}.xml</outputFile>
 						</configuration>
@@ -151,7 +201,7 @@
 							<dependency>
 								<groupId>org.springframework.boot</groupId>
 								<artifactId>spring-boot-starter-data-jpa</artifactId>
-								<version>${spring-boot.version}</version>
+								<version>3.5.0</version>
 							</dependency>
 						</dependencies>
 					</plugin>

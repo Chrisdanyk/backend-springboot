@@ -12,19 +12,16 @@ import javax.sql.DataSource;
 public class LiquibaseConfig {
 
     @Autowired
-    private DataSource dataSource;
-
-    @Autowired
     private Environment env;
 
     @Bean
-    public SpringLiquibase liquibase() {
+    public SpringLiquibase liquibase(DataSource dataSource) {
         SpringLiquibase liquibase = new SpringLiquibase();
         liquibase.setDataSource(dataSource);
         liquibase.setChangeLog("classpath:db/changelog/db.changelog-master.xml");
-        liquibase.setContexts(env.getProperty("spring.liquibase.contexts", "dev"));
-        liquibase.setDefaultSchema(env.getProperty("spring.liquibase.default-schema", "public"));
-        liquibase.setDropFirst(false);
+        liquibase.setContexts(env.getProperty("spring.liquibase.contexts", ""));
+        liquibase.setDefaultSchema(env.getProperty("spring.liquibase.default-schema"));
+        liquibase.setDropFirst(env.getProperty("spring.liquibase.drop-first", Boolean.class, false));
         return liquibase;
     }
 }
