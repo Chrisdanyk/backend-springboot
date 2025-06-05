@@ -1,11 +1,15 @@
 package cg.dany.todos.todo.controller;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import cg.dany.todos.todo.dto.CreateTodoRequest;
+import cg.dany.todos.todo.dto.TodoDTO;
+import cg.dany.todos.todo.dto.TodoSearchRequest;
+import cg.dany.todos.todo.service.TodoService;
+import cg.dany.todos.common.dto.PaginatedResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -13,15 +17,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-import cg.dany.todos.common.exception.BadRequestException;
-import cg.dany.todos.todo.dto.CreateTodoRequest;
-import cg.dany.todos.todo.dto.TodoDTO;
-import cg.dany.todos.todo.service.TodoService;
-
 @RestController
 @RequestMapping("/api/todos")
 public class TodoController {
-
+    private static final Logger logger = LoggerFactory.getLogger(TodoController.class);
     private final TodoService todoService;
 
     public TodoController(TodoService todoService) {
@@ -29,27 +28,42 @@ public class TodoController {
     }
 
     @GetMapping
-    public List<TodoDTO> getAllTodos() {
-        return todoService.getAllTodosByUserId(null);
+    public ResponseEntity<PaginatedResponse<TodoDTO>> getAllTodos(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer pageSize,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDirection) {
+
+        logger.info("Getting all todos with page: {}, pageSize: {}, sortBy: {}, sortDirection: {}",
+                page, pageSize, sortBy, sortDirection);
+
+        TodoSearchRequest searchRequest = new TodoSearchRequest();
+        searchRequest.setPage(page);
+        searchRequest.setPageSize(pageSize);
+        searchRequest.setSortBy(sortBy);
+        searchRequest.setSortDirection(sortDirection);
+
+        return ResponseEntity.ok(todoService.getTodos(searchRequest));
     }
 
     @GetMapping("/{id}")
-    public TodoDTO getTodoById(@PathVariable UUID id) {
-        return todoService.getTodoById(id);
+    public ResponseEntity<TodoDTO> getTodoById(@PathVariable UUID id) {
+        return ResponseEntity.ok(todoService.getTodoById(id));
     }
 
     @PostMapping
-    public TodoDTO createTodo(@RequestBody CreateTodoRequest CreateTodoRequest) {
-        return todoService.createTodo(CreateTodoRequest);
+    public ResponseEntity<TodoDTO> createTodo(@RequestBody CreateTodoRequest createTodoRequest) {
+        return ResponseEntity.ok(todoService.createTodo(createTodoRequest));
     }
 
     @PutMapping("/{id}")
-    public TodoDTO updateTodo(@PathVariable UUID id, @RequestBody TodoDTO todo) {
-        return todoService.updateTodo(id, todo);
+    public ResponseEntity<TodoDTO> updateTodo(@PathVariable UUID id, @RequestBody TodoDTO todoDTO) {
+        return ResponseEntity.ok(todoService.updateTodo(id, todoDTO));
     }
 
     @DeleteMapping("/{id}")
-    public void deleteTodo(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteTodo(@PathVariable UUID id) {
         todoService.deleteTodo(id);
+        return ResponseEntity.ok().build();
     }
 }

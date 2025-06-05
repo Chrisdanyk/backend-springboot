@@ -3,31 +3,50 @@ package cg.dany.todos.todo.service;
 import cg.dany.todos.todo.model.Todo;
 import cg.dany.todos.todo.dto.CreateTodoRequest;
 import cg.dany.todos.todo.dto.TodoDTO;
+import cg.dany.todos.todo.dto.TodoSearchRequest;
 import cg.dany.todos.todo.repository.TodoRepository;
 import cg.dany.todos.common.exception.NotFoundException;
 import cg.dany.todos.common.exception.BadRequestException;
+import cg.dany.todos.common.dto.PaginatedResponse;
+import cg.dany.todos.common.service.PaginationService;
+import cg.dany.todos.config.PaginationConfig;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
-public class TodoService {
+public class TodoService extends PaginationService<Todo, TodoDTO, TodoSearchRequest> {
+    private static final Logger logger = LoggerFactory.getLogger(TodoService.class);
     private final TodoRepository todoRepository;
+    private static final List<String> ALLOWED_SORT_FIELDS = Arrays.asList(
+            "title", "completed", "createdAt", "updatedAt");
 
-    public TodoService(TodoRepository todoRepository) {
+    public TodoService(TodoRepository todoRepository, PaginationConfig paginationConfig) {
+        super(paginationConfig);
         this.todoRepository = todoRepository;
+        logger.info("TodoService initialized with default page size: {}", paginationConfig.getDefaultPageSize());
     }
 
     @Transactional(readOnly = true)
-    public List<TodoDTO> getAllTodosByUserId(UUID userId) {
-        return todoRepository.findByUserId(userId)
-                .stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public PaginatedResponse<TodoDTO> getTodos(TodoSearchRequest searchRequest) {
+        Pageable pageable = createPageable(searchRequest, ALLOWED_SORT_FIELDS);
+        logger.info("Creating pageable with page size: {}", pageable.getPageSize());
+
+        Page<Todo> todoPage = todoRepository.findAll(pageable);
+        logger.info("Retrieved {} todos for page {} with size {}",
+                todoPage.getContent().size(),
+                todoPage.getNumber(),
+                todoPage.getSize());
+
+        return createPaginatedResponse(todoPage, searchRequest, this::convertToDTO);
     }
 
     @Transactional(readOnly = true)

@@ -29,3 +29,9 @@ server:
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION}
+
+# Pagination Configuration
+pagination:
+  default-page-size: 5
+  default-sort-field: createdAt
+  default-sort-direction: desc
